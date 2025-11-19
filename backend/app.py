@@ -1,11 +1,12 @@
 from flask import Flask, render_template, request
 from datetime import datetime, timedelta
+import os
 
 # Tell Flask where to find templates and static files
 app = Flask(
     __name__,
     template_folder="../frontend/templates",
-    # static_folder="../frontend/static"
+    static_folder="../frontend/static"
 )
 
 @app.route("/", methods=["GET", "POST"])
@@ -13,9 +14,9 @@ def planner():
     if request.method == "POST":
         # 1️⃣ Get form data
         wake_time_str = request.form.get("wake_time")  # "HH:MM"
-        study_hours = float(request.form.get("study"))
-        travel_hours = float(request.form.get("travel"))
-        task = request.form.get("task")
+        study_hours = float(request.form.get("study", 0))
+        travel_hours = float(request.form.get("travel", 0))
+        task = request.form.get("task", "")
 
         # 2️⃣ Convert wake time to datetime
         wake_time = datetime.strptime(wake_time_str, "%H:%M")
@@ -23,8 +24,7 @@ def planner():
         # 3️⃣ Prepare schedule
         schedule = []
 
-        # Sleep time (assuming 8 hours)
-        sleep_end = wake_time
+        # Wake up
         schedule.append(f"Wake up at {wake_time.strftime('%H:%M')}")
 
         # Study period
@@ -47,11 +47,12 @@ def planner():
             schedule.append(f"Free time for {freetime_hours} hours")
 
         return render_template(
-            "./planner.html",
+            "planner.html",
             wake_time=wake_time_str,
             study=study_hours,
             travel=travel_hours,
             task=task,
+            freetime=freetime_hours,
             schedule=schedule
         )
 
@@ -62,8 +63,11 @@ def planner():
         study="",
         travel="",
         task="",
+        freetime="",
         schedule=None
     )
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # Use Render's dynamic port or default 5000 locally
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=True)
